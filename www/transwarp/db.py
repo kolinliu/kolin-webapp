@@ -1,3 +1,10 @@
+# coding=utf-8
+"""
+Database operation module.
+"""
+
+import time, uuid, functools, threading, logging
+
 class Dict(dict):
 	def __init__(self, names=(), values=(), **kw):
 		super(Dict, self).__init__(**kw)
@@ -10,7 +17,7 @@ class Dict(dict):
 		except KeyError:
 			raise AttributeError(r"'Dict' object has no attibute '%s'" % key)
 
-	def __setattr__(self, key, )
+	def __setattr__(self, key, value):
 		self[key] = value
 
 
@@ -44,7 +51,7 @@ class _Engine(object):
 	def __init__(self, connect):
 		self._connect = connect
 	def connect(self):
-		return self._connect
+		return self._connect()
 
 engine = None
 
@@ -83,7 +90,7 @@ def connection():
 
 class _LasyConnection(object):
 	def __init__(self):
-		self.connection = connection
+		self.connection = None
 
 	def cursor(self):
 		if self.connection is None:
@@ -94,13 +101,16 @@ class _LasyConnection(object):
 	def commit(self):
 		self.connection.commit()
 
-	def  rollback(self):
+	def rollback(self):
 		self.connection.rollback()
 
 	def cleanup(self):
 		if self.connection:
 			connection = self.connection
 			self.connection = None
+			logging.info('close connection <%s>...' % hex(id(connection)))
+			#print 'close connection <%s>...' % hex(id(connection))
+			#print type(connection)
 			connection.close()
 
 def with_connection(func):
@@ -219,3 +229,21 @@ def _update(sql, *args):
 	finally:
 		if cursor:
 			cursor.close()
+
+def insert(table, **kw):
+	cols, args = zip(*kw.iteritems())
+	sql = 'insert into `%s` (%s) values (%s)' % (table, ','.join(['`%s`' % col for col in cols]), ','.join(['?' for i in range(len(cols))]))
+	return _update(sql, *args)
+
+def update(sql, *args):
+	return _update(sql, *args)
+
+
+if __name__ == '__main__':
+	logging.basicConfig(level=logging.DEBUG)
+	create_engine('root', '123456', 'test')
+	update('drop table if exists user')
+	update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
+	import doctest
+	doctest.testmod()
+
