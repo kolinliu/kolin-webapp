@@ -109,8 +109,6 @@ class _LasyConnection(object):
 			connection = self.connection
 			self.connection = None
 			logging.info('close connection <%s>...' % hex(id(connection)))
-			#print 'close connection <%s>...' % hex(id(connection))
-			#print type(connection)
 			connection.close()
 
 def with_connection(func):
